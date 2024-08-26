@@ -1,0 +1,3 @@
+python-telegram-bot==20.1
+pyyaml
+qrcode

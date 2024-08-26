@@ -7,6 +7,16 @@ services:
     volumes:
       - ./config.json:/etc/xray/config.json
     restart: unless-stopped
+
+  bot:
+    image: "telegram-bot"
+    build:
+      context: .
+      dockerfile: ./build/bot/Dockerfile
+    volumes:
+      - ./configs:/app/configs
+      - ./db:/app/db
+
 #vCA34Wl_skAJS1hPRR3CyxiLUYeG8yWSTe9SUts0pUY
 #63cb36cd-56b6-4150-b9f5-8c7220f18604
 #docker run -it --rm --name xray-core ghcr.io/xtls/xray-core 'uuid'

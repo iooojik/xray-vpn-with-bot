@@ -4,8 +4,8 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFi
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 
 from src.config import load_config
-from translations import translate
-from db import init_db, save_vpn_config, get_vpn_configs
+from src.translations import translate
+from src.db import init_db, save_vpn_config, get_vpn_configs
 
 
 # Handle /start command
@@ -48,12 +48,15 @@ async def main_menu(update: Update, context) -> None:
     await query.edit_message_text(text=menu_message, reply_markup=reply_markup)
 
 
+def vpn_config():
+    vpn_dsn = "vless://uuid@server_ip:443?flow=xtls-rprx-vision-udp443&type=tcp&security=reality&fp=chrome&sni=www.microsoft.com&pbk=public_key&sid=47920101f2f973f7&spx=%2F#74.119.192.227"
+    return vpn_dsn
+
+
 # Generate VPN configuration and save to database
 async def generate_vpn(update: Update, context) -> None:
     query = update.callback_query
     await query.answer()
-
-    vpn_config = "your-vpn-configuration-string"
 
     qr = qrcode.QRCode(
         version=1,
@@ -61,7 +64,7 @@ async def generate_vpn(update: Update, context) -> None:
         box_size=10,
         border=4,
     )
-    qr.add_data(vpn_config)
+    qr.add_data(vpn_config())
     qr.make(fit=True)
 
     img = qr.make_image(fill='black', back_color='white')
@@ -128,7 +131,8 @@ async def back_to_start(update: Update, context) -> None:
 
 def main():
     config = load_config()
-    init_db()  # Initialize the database
+    init_db()
+
     application = Application.builder().token(config['bot_token']).build()
 
     application.add_handler(CommandHandler("start", start))
