@@ -1,4 +1,5 @@
 import json
+import subprocess
 from datetime import datetime, timedelta
 from uuid import uuid4
 
@@ -20,7 +21,7 @@ def cfg_dsn(
 
 
 # Function to add a new user to the Xray config
-def add_xray_user(config_path, user_id, user_uuid, expiration_days=365):
+def add_xray_user(config_path, user_id, user_uuid, container_name, expiration_days=365):
     # Load the existing Xray config
     with open(config_path, 'r') as file:
         config = json.load(file)
@@ -50,3 +51,16 @@ def add_xray_user(config_path, user_id, user_uuid, expiration_days=365):
     # Write the updated config back to the file
     with open(config_path, 'w') as file:
         json.dump(config, file, indent=4)
+
+    restart_container(container_name)
+
+
+def restart_container(container_name):
+    if not container_name:
+        return
+
+    try:
+        subprocess.run(["docker", "restart", container_name], check=True)
+        print(f"Container '{container_name}' restarted successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to restart container '{container_name}': {e}")

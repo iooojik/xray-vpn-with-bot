@@ -19,6 +19,7 @@ class TelegramBot:
         self._public_key = config.get("server").get("public_key")
         self._short_id = config.get("server").get("short_id")
         self._xray_cfg_path = config.get("server").get("xray_cfg_path")
+        self._xray_container = config.get("xray_container")
 
         self._application = Application.builder().token(config['bot_token']).build()
 
@@ -81,6 +82,7 @@ class TelegramBot:
             self._xray_cfg_path,
             str(user_id),
             str(user_uuid),
+            self._xray_container,
         )
 
         save_vpn_config(user_id, vpn_dsn)

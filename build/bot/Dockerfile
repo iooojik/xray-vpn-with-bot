@@ -11,6 +11,7 @@ RUN apk update && apk add --no-cache \
     libffi-dev \
     jpeg-dev \
     zlib-dev \
+    docker-cli \
     make
 
 COPY ./src /app/src

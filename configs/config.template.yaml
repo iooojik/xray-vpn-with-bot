@@ -1,1 +1,10 @@
 bot_token: ""
+
+server:
+  ip: "0.0.0.1"
+  port: 443
+  public_key: ""
+  short_id: "ef29d57335822bb2"
+  xray_cfg_path: "/etc/xray/config.json"
+
+xray_container: "xray-vpn"
