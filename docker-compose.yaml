@@ -3,7 +3,6 @@ services:
     image: ghcr.io/xtls/xray-core
     container_name: "core"
     ports:
-      - "23:23"
       - "443:443"
     volumes:
       - ./configs/config.json:/etc/xray/config.json

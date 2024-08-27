@@ -34,7 +34,8 @@ def add_xray_user(config_path, user_id, user_uuid, container_name, expiration_da
         "id": user_uuid,
         "alterId": 0,
         "user_id": user_id,
-        "expiry": expiration_date
+        "expiry": expiration_date,
+        "flow": "xtls-rprx-vision"
     }
 
     # Find the inbound configuration for VLESS or VMess (adjust according to your setup)
