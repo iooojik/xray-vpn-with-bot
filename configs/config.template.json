@@ -1,0 +1,84 @@
+{
+  "log": {
+    "loglevel": "info"
+  },
+  "routing": {
+    "rules": [],
+    "domainStrategy": "AsIs"
+  },
+  "inbounds": [
+    {
+      "port": 23,
+      "tag": "ss",
+      "protocol": "shadowsocks",
+      "settings": {
+        "method": "2022-blake3-aes-128-gcm",
+        "password": "aaaaaaaaaaaaaaaabbbbbbbbbbbbbbbb",
+        "network": "tcp,udp"
+      }
+    },
+    {
+      "port": 443,
+      "protocol": "vless",
+      "tag": "vless_tls",
+      "settings": {
+        "clients": [
+          {
+            "id": "4c3fe585-ac09-41df-b284-70d3fbe18884",
+            "email": "user1@myserver",
+            "flow": "xtls-rprx-vision"
+          },
+          {
+            "id": "6b435a60-eb04-4eac-b1b5-6aeb3eb729f9",
+            "alterId": 0,
+            "user_id": "5238175693",
+            "expiry": "2025-08-27T20:33:08Z"
+          },
+          {
+            "id": "afbd0161-43bf-4b27-a653-0aae8778f3db",
+            "alterId": 0,
+            "user_id": "5238175693",
+            "expiry": "2025-08-27T20:34:19Z"
+          }
+        ],
+        "decryption": "none"
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "show": false,
+          "dest": "www.microsoft.com:443",
+          "xver": 0,
+          "serverNames": [
+            "www.microsoft.com"
+          ],
+          "privateKey": "GOTPj_klK7_j_IvjxiCtyBL80RYotYSOdBBBSfFOMH4",
+          "minClientVer": "",
+          "maxClientVer": "",
+          "maxTimeDiff": 0,
+          "shortIds": [
+            "aabbccdd"
+          ]
+        }
+      },
+      "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "protocol": "freedom",
+      "tag": "direct"
+    },
+    {
+      "protocol": "blackhole",
+      "tag": "block"
+    }
+  ]
+}

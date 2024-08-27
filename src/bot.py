@@ -1,14 +1,13 @@
-import os
-from uuid import uuid4
+from io import BytesIO
 
 import qrcode
-from io import BytesIO
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 
 from src.config import load_config
-from src.translations import translate
 from src.db import init_db, save_vpn_config, get_vpn_configs
+from src.translations import translate
+from src.xray import cfg_dsn, add_xray_user
 
 
 class TelegramBot:
@@ -18,6 +17,8 @@ class TelegramBot:
         self._server_ip = config.get("server").get("ip")
         self._server_port = config.get("server").get("port")
         self._public_key = config.get("server").get("public_key")
+        self._short_id = config.get("server").get("short_id")
+        self._xray_cfg_path = config.get("server").get("xray_cfg_path")
 
         self._application = Application.builder().token(config['bot_token']).build()
 
@@ -69,13 +70,18 @@ class TelegramBot:
         if configs:
             return configs[0][0]
 
-        user_uuid = uuid4()
-        user_short_id = os.urandom(8).hex()
+        vpn_dsn, user_uuid = cfg_dsn(
+            self._server_ip,
+            self._server_port,
+            self._public_key,
+            self._short_id,
+        )
 
-        vpn_dsn = f"vless://{user_uuid}@{self._server_ip}:{self._server_port}?"
-        vpn_dsn += f"flow=xtls-rprx-vision-udp{self._server_port}&type=tcp&security=reality"
-        vpn_dsn += "&fp=chrome&sni=www.microsoft.com"
-        vpn_dsn += f"&pbk={self._public_key}&sid={user_short_id}&spx=/#{self._server_ip}"
+        add_xray_user(
+            self._xray_cfg_path,
+            str(user_id),
+            str(user_uuid),
+        )
 
         save_vpn_config(user_id, vpn_dsn)
         return vpn_dsn
