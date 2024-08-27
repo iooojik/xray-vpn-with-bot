@@ -1,14 +1,21 @@
 services:
   xray-vpn:
     image: ghcr.io/xtls/xray-core
+    container_name: "core"
     ports:
+      - "23:23"
       - "443:443"
-      - "8388:8388"
     volumes:
-      - ./config.json:/etc/xray/config.json
+      - ./configs/config.json:/etc/xray/config.json
     restart: unless-stopped
-#vCA34Wl_skAJS1hPRR3CyxiLUYeG8yWSTe9SUts0pUY
-#63cb36cd-56b6-4150-b9f5-8c7220f18604
-#docker run -it --rm --name xray-core ghcr.io/xtls/xray-core 'uuid'
-#docker run -it --rm --name xray-core ghcr.io/xtls/xray-core 'x25519'
-#todo bot to generate connection links and qr code
+
+  bot:
+    image: "telegram-bot"
+    build:
+      context: .
+      dockerfile: ./build/bot/Dockerfile
+    volumes:
+      - ./configs/config.json:/app/configs/config.json
+      - ./configs/config.yaml:/app/configs/config.yaml
+      - ./db:/app/db
+      - /var/run/docker.sock:/var/run/docker.sock

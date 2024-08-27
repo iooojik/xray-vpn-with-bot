@@ -8,7 +8,7 @@
   },
   "inbounds": [
     {
-      "port": 8388,
+      "port": 23,
       "tag": "ss",
       "protocol": "shadowsocks",
       "settings": {
@@ -25,7 +25,20 @@
         "clients": [
           {
             "id": "4c3fe585-ac09-41df-b284-70d3fbe18884",
+            "email": "user1@myserver",
             "flow": "xtls-rprx-vision"
+          },
+          {
+            "id": "6b435a60-eb04-4eac-b1b5-6aeb3eb729f9",
+            "alterId": 0,
+            "user_id": "5238175693",
+            "expiry": "2025-08-27T20:33:08Z"
+          },
+          {
+            "id": "afbd0161-43bf-4b27-a653-0aae8778f3db",
+            "alterId": 0,
+            "user_id": "5238175693",
+            "expiry": "2025-08-27T20:34:19Z"
           }
         ],
         "decryption": "none"
@@ -40,7 +53,7 @@
           "serverNames": [
             "www.microsoft.com"
           ],
-          "privateKey": "kDw5SkEkaWQDMgenvs8TmV1F7jLpwLUb36MpTHZykV4",
+          "privateKey": "GOTPj_klK7_j_IvjxiCtyBL80RYotYSOdBBBSfFOMH4",
           "minClientVer": "",
           "maxClientVer": "",
           "maxTimeDiff": 0,
