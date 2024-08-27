@@ -1,3 +1,6 @@
+import os
+from uuid import uuid4
+
 import qrcode
 from io import BytesIO
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputFile
@@ -8,143 +11,150 @@ from src.translations import translate
 from src.db import init_db, save_vpn_config, get_vpn_configs
 
 
-# Handle /start command
-async def start(update: Update, context) -> None:
-    user = update.message.from_user
-    welcome_message = translate('welcome', 'en', name=user.first_name)
-    keyboard = [
-        [InlineKeyboardButton("Русский", callback_data='lang_ru')],
-        [InlineKeyboardButton("English", callback_data='lang_en')]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+class TelegramBot:
 
+    def __init__(self, cfg_path: str):
+        config = load_config(cfg_path)
+        self._server_ip = config.get("server").get("ip")
+        self._server_port = config.get("server").get("port")
+        self._public_key = config.get("server").get("public_key")
 
-# Handle language choice
-async def language_choice(update: Update, context) -> None:
-    query = update.callback_query
-    await query.answer()
+        self._application = Application.builder().token(config['bot_token']).build()
 
-    if query.data == 'lang_ru':
-        context.user_data['language'] = 'ru'
-    elif query.data == 'lang_en':
-        context.user_data['language'] = 'en'
+        self._bind_handlers()
 
-    await main_menu(update, context)
+    # Handle /start command
+    @staticmethod
+    async def _start(update: Update, _) -> None:
+        user = update.message.from_user
+        welcome_message = translate('welcome', 'en', name=user.first_name)
+        keyboard = [
+            [InlineKeyboardButton("Русский", callback_data='lang_ru')],
+            [InlineKeyboardButton("English", callback_data='lang_en')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
 
+        await update.message.reply_text(welcome_message, reply_markup=reply_markup)
 
-# Main menu
-async def main_menu(update: Update, context) -> None:
-    query = update.callback_query
-    lang = context.user_data.get('language', 'en')
-    menu_message = translate('menu_message', lang)
-    buttons = [
-        [InlineKeyboardButton(translate('generate_vpn', lang), callback_data='generate_vpn')],
-        [InlineKeyboardButton(translate('view_vpn', lang), callback_data='view_vpn')],
-        [InlineKeyboardButton(translate('manuals', lang), callback_data='manuals')]
-    ]
+    # Main menu
+    @staticmethod
+    async def _main_menu(update: Update, context) -> None:
+        query = update.callback_query
+        lang = context.user_data.get('language', 'en')
+        menu_message = translate('menu_message', lang)
+        buttons = [
+            [InlineKeyboardButton(translate('generate_vpn', lang), callback_data='generate_vpn')],
+            [InlineKeyboardButton(translate('view_vpn', lang), callback_data='view_vpn')],
+            [InlineKeyboardButton(translate('manuals', lang), callback_data='manuals')]
+        ]
 
-    reply_markup = InlineKeyboardMarkup(buttons)
-    await query.edit_message_text(text=menu_message, reply_markup=reply_markup)
+        reply_markup = InlineKeyboardMarkup(buttons)
+        await query.edit_message_text(text=menu_message, reply_markup=reply_markup)
 
+    # Handle language choice
+    async def _language_choice(self, update: Update, context) -> None:
+        query = update.callback_query
+        await query.answer()
 
-def vpn_config():
-    vpn_dsn = "vless://uuid@server_ip:443?flow=xtls-rprx-vision-udp443&type=tcp&security=reality&fp=chrome&sni=www.microsoft.com&pbk=public_key&sid=47920101f2f973f7&spx=%2F#74.119.192.227"
-    return vpn_dsn
+        if query.data == 'lang_ru':
+            context.user_data['language'] = 'ru'
+        elif query.data == 'lang_en':
+            context.user_data['language'] = 'en'
 
+        await self._main_menu(update, context)
 
-# Generate VPN configuration and save to database
-async def generate_vpn(update: Update, context) -> None:
-    query = update.callback_query
-    await query.answer()
+    def vpn_config(self, user_id: int) -> str:
+        configs = get_vpn_configs(user_id)
 
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(vpn_config())
-    qr.make(fit=True)
+        if configs:
+            return configs[0][0]
 
-    img = qr.make_image(fill='black', back_color='white')
+        user_uuid = uuid4()
+        user_short_id = os.urandom(8).hex()
 
-    bio = BytesIO()
-    bio.name = 'vpn_qr.png'
-    img.save(bio, 'PNG')
-    bio.seek(0)
+        vpn_dsn = f"vless://{user_uuid}@{self._server_ip}:{self._server_port}?"
+        vpn_dsn += f"flow=xtls-rprx-vision-udp{self._server_port}&type=tcp&security=reality"
+        vpn_dsn += "&fp=chrome&sni=www.microsoft.com"
+        vpn_dsn += f"&pbk={self._public_key}&sid={user_short_id}&spx=/#{self._server_ip}"
 
-    user_id = query.from_user.id
-    save_vpn_config(user_id, vpn_config)
+        save_vpn_config(user_id, vpn_dsn)
+        return vpn_dsn
 
-    lang = context.user_data.get('language', 'en')
-    await query.message.reply_photo(photo=InputFile(bio), caption=translate('vpn_generated', lang))
+    # Generate VPN configuration and save to database
+    async def _generate_vpn(self, update: Update, context) -> None:
+        query = update.callback_query
+        await query.answer()
 
+        user_config = self.vpn_config(query.from_user.id)
 
-# View existing VPN configurations
-async def view_vpn(update: Update, context) -> None:
-    query = update.callback_query
-    await query.answer()
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=1,
+        )
+        qr.add_data(user_config)
+        qr.make(fit=True)
 
-    user_id = query.from_user.id
-    configs = get_vpn_configs(user_id)
+        img = qr.make_image(fill='black', back_color='white')
 
-    lang = context.user_data.get('language', 'en')
-    if not configs:
-        await query.edit_message_text(text=translate('no_vpn_configs', lang), reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(translate('back', lang), callback_data='back_to_menu')]]))
-    else:
-        messages = []
-        for config, created_at in configs:
-            messages.append(f"Configuration: {config}\nCreated at: {created_at}\n\n")
+        bio = BytesIO()
+        bio.name = 'vpn_qr.png'
+        img.save(bio, 'PNG')
+        bio.seek(0)
 
-        await query.edit_message_text(text=''.join(messages), reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(translate('back', lang), callback_data='back_to_menu')]]))
+        lang = context.user_data.get('language', 'en')
+        await query.message.reply_text(translate('vpn_generated', lang))
+        await query.message.reply_photo(
+            photo=InputFile(bio),
+            caption=f"```{user_config}```",
+            parse_mode='MarkdownV2',
+        )
 
+    # Show manuals
+    @staticmethod
+    async def _manuals(update: Update, context) -> None:
+        query = update.callback_query
+        await query.answer()
+        lang = context.user_data.get('language', 'en')
+        menu_message = translate('select_os', lang)
+        buttons = [
+            [InlineKeyboardButton("Windows", url="https://example.com/windows_manual")],
+            [InlineKeyboardButton("Linux", url="https://example.com/linux_manual")],
+            [InlineKeyboardButton("MacOS", url="https://example.com/macos_manual")],
+            [InlineKeyboardButton(translate('back', lang), callback_data='back_to_menu')]
+        ]
 
-# Show manuals
-async def manuals(update: Update, context) -> None:
-    query = update.callback_query
-    await query.answer()
-    lang = context.user_data.get('language', 'en')
-    menu_message = translate('select_os', lang)
-    buttons = [
-        [InlineKeyboardButton("Windows", url="https://example.com/windows_manual")],
-        [InlineKeyboardButton("Linux", url="https://example.com/linux_manual")],
-        [InlineKeyboardButton("MacOS", url="https://example.com/macos_manual")],
-        [InlineKeyboardButton(translate('back', lang), callback_data='back_to_menu')]
-    ]
+        reply_markup = InlineKeyboardMarkup(buttons)
+        await query.edit_message_text(text=menu_message, reply_markup=reply_markup)
 
-    reply_markup = InlineKeyboardMarkup(buttons)
-    await query.edit_message_text(text=menu_message, reply_markup=reply_markup)
+    # Handle "Back" button in the main menu
+    async def _back_to_menu(self, update: Update, context) -> None:
+        await self._main_menu(update, context)
 
+    # Handle "Back" button to return to start
+    async def _back_to_start(self, update: Update, context) -> None:
+        await self._start(update, context)
 
-# Handle "Back" button in the main menu
-async def back_to_menu(update: Update, context) -> None:
-    await main_menu(update, context)
+    def _bind_handlers(self, ) -> None:
+        self._application.add_handler(CommandHandler("start", self._start))
+        self._application.add_handler(CallbackQueryHandler(self._language_choice, pattern='^lang_'))
+        self._application.add_handler(CallbackQueryHandler(self._main_menu, pattern='^menu_'))
+        self._application.add_handler(CallbackQueryHandler(self._generate_vpn, pattern='^generate_vpn$'))
+        self._application.add_handler(CallbackQueryHandler(self._generate_vpn, pattern='^view_vpn$'))
+        self._application.add_handler(CallbackQueryHandler(self._manuals, pattern='^manuals$'))
+        self._application.add_handler(CallbackQueryHandler(self._back_to_menu, pattern='^back_to_menu$'))
+        self._application.add_handler(CallbackQueryHandler(self._back_to_start, pattern='^back_to_start$'))
 
-
-# Handle "Back" button to return to start
-async def back_to_start(update: Update, context) -> None:
-    await start(update, context)
+    def run(self):
+        self._application.run_polling()
 
 
 def main():
-    config = load_config()
     init_db()
 
-    application = Application.builder().token(config['bot_token']).build()
-
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CallbackQueryHandler(language_choice, pattern='^lang_'))
-    application.add_handler(CallbackQueryHandler(main_menu, pattern='^menu_'))
-    application.add_handler(CallbackQueryHandler(generate_vpn, pattern='^generate_vpn$'))
-    application.add_handler(CallbackQueryHandler(view_vpn, pattern='^view_vpn$'))
-    application.add_handler(CallbackQueryHandler(manuals, pattern='^manuals$'))
-    application.add_handler(CallbackQueryHandler(back_to_menu, pattern='^back_to_menu$'))
-    application.add_handler(CallbackQueryHandler(back_to_start, pattern='^back_to_start$'))
-
-    application.run_polling()
+    bot = TelegramBot(cfg_path="configs/config.yaml")
+    bot.run()
 
 
 if __name__ == '__main__':

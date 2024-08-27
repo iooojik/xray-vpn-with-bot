@@ -34,7 +34,11 @@ translations = {
     'select_os': {
         'ru': "Выберите операционную систему:",
         'en': "Select an operating system:"
-    }
+    },
+    'configuration': {
+        'ru': "Конфигурация",
+        'en': "Configuration"
+    },
 }
 
 
