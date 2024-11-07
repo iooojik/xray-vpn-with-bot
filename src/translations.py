@@ -1,8 +1,4 @@
 translations = {
-    'welcome': {
-        'ru': "Привет, {name}! Выберите язык:",
-        'en': "Hello, {name}! Please choose a language:"
-    },
     'menu_message': {
         'ru': "Выберите действие:",
         'en': "Choose an action:"
@@ -12,8 +8,8 @@ translations = {
         'en': "Generate VPN configuration"
     },
     'view_vpn': {
-        'ru': "Посмотреть существующие",
-        'en': "View existing"
+        'ru': "Посмотреть существующие конфигурации",
+        'en': "View existing configurations"
     },
     'manuals': {
         'ru': "Мануалы",
@@ -43,4 +39,7 @@ translations = {
 
 
 def translate(key, lang, **kwargs):
+    if lang not in ['en', 'ru']:
+        lang = 'en'
+
     return translations[key][lang].format(**kwargs)
