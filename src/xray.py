@@ -13,7 +13,7 @@ def cfg_dsn(
     user_uuid = uuid4()
 
     vpn_dsn = f"vless://{user_uuid}@{server_ip}:{server_port}?"
-    vpn_dsn += f"flow=xtls-rprx-vision-udp{server_port}&type=tcp&security=reality"
+    vpn_dsn += f"flow=xtls-rprx-vision-udp443&type=tcp&security=reality"
     vpn_dsn += "&fp=chrome&sni=www.microsoft.com"
     vpn_dsn += f"&pbk={public_key}&sid={short_id}&spx=/#{server_ip}"
 
