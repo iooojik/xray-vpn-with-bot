@@ -14,7 +14,7 @@ services:
       context: .
       dockerfile: ./build/bot/Dockerfile
     volumes:
-      - ./configs/config.json:/app/configs/config.json
-      - ./configs/config.yaml:/app/configs/config.yaml
+      - ./configs/config.json:/app/configs/config.json:ro
+      - ./configs/config.yaml:/app/configs/config.yaml:ro
       - ./db:/app/db
       - /var/run/docker.sock:/var/run/docker.sock

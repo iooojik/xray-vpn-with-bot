@@ -1,5 +1,5 @@
 prepare:
-	pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+	mkdir -p db configs && pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 run:
 	python -m src.bot
