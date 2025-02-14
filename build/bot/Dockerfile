@@ -22,8 +22,4 @@ RUN make prepare
 
 RUN rm -rf requirements.txt
 
-RUN addgroup -S botgroup && adduser -S bot -G botgroup && chown -R bot:botgroup /app /var/run
-
-USER bot
-
 CMD ["make", "run"]
