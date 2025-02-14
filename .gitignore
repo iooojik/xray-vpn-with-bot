@@ -16,6 +16,7 @@ mysql.log
 .idea/**/contentModel.xml
 main
 *.pem
+venv
 .env.local
 # Sensitive or high-churn files
 .idea/**/dataSources/

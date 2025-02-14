@@ -20,7 +20,7 @@ configurations, select languages, and access manuals for different operating sys
 
 2. **Install required dependencies:**
    ```bash
-   pip install -r requirements.txt
+   make prepare
    ```
 
 3. **Set up configurations:**
@@ -28,13 +28,13 @@ configurations, select languages, and access manuals for different operating sys
 
 4. **Run the application:**
    ```bash
-   python src/bot.py
+   make run
    ```
 
 Alternatively, you can use Docker:
 
 ```bash
-docker compose build && docker compose up
+make docker
 ```
 
 ## Usage
@@ -49,7 +49,7 @@ docker compose build && docker compose up
 - `configs/`: Configuration files for the VPN and bot settings.
 - `build/`: Build scripts and related files.
 - `docker-compose.yaml`: Docker Compose file to deploy the project easily.
-- `install.sh`: Script to install necessary dependencies and set up the environment.
+- `Makefile`: Makefile which helps to install necessary dependencies and set up the environment.
 
 ## Contributing
 

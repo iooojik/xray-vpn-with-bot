@@ -28,11 +28,12 @@ class TelegramBot:
 
     # Main menu
     async def _main_menu(self, update: Update, _) -> None:
-        lang = update.message.from_user.language_code
+        msg = update.message if update.message else update.effective_message
+        lang = msg.from_user.language_code
 
         menu_message = translate('menu_message', lang)
 
-        user_config = self.vpn_config(update.message.from_user.id)
+        user_config = self.vpn_config(msg.from_user.id)
 
         keyboard = []
 
@@ -50,7 +51,7 @@ class TelegramBot:
 
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-        await update.message.reply_text(menu_message, reply_markup=reply_markup)
+        await msg.reply_text(menu_message, reply_markup=reply_markup)
 
     def vpn_config(self, user_id: int) -> str:
         configs = get_vpn_configs(user_id)
